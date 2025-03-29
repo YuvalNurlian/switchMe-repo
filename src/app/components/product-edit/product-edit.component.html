@@ -1,0 +1,69 @@
+<div class="product-edit-container">
+    <h2>עריכת מוצר</h2>
+
+    <div class="form-group">
+        <label for="productName">שם מוצר:</label>
+        <input id="productName" [(ngModel)]="currentProduct.name" type="text" class="form-control">
+    </div>
+
+    <div class="form-row">
+        <div class="form-group">
+            <label for="productCategory">קטגוריה:</label>
+            <select id="productCategory" [(ngModel)]="currentProduct.category" (change)="print()" class="form-control">
+                <option *ngFor="let category of categories" [ngValue]="category">
+                    {{ category.name }}
+                </option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="productCondition">מצב המוצר:</label>
+            <select id="productCondition" [(ngModel)]="currentProduct.condition" class="form-control">
+                <option *ngFor="let condition of conditions" [ngValue]="condition">
+                    {{ condition?.name }}
+                </option>
+            </select>
+        </div>
+    </div>
+
+    <div class="form-row">
+        <div class="form-group">
+            <label for="productYears">שנות שימוש:</label>
+            <input id="productYears" [(ngModel)]="currentProduct.yearsUsed" type="number" class="form-control">
+        </div>
+
+        <div class="form-group">
+            <label for="productManufacturer">יצרן:</label>
+            <input id="productManufacturer" [(ngModel)]="currentProduct.manufacturer" type="text" class="form-control">
+        </div>
+    </div>
+
+    <div class="form-row">
+        <div class="form-group" >
+            <label for="productPrice">מחיר רכישה:</label>
+            <input id="productPrice" [(ngModel)]="currentProduct.purchasePrice" type="number" class="form-control">
+        </div>
+
+        <div *ngIf="[1, 2, 4].includes(currentProduct.category.id)" class="form-group">
+            <label for="productMaterial">חומר עיקרי:</label>
+            <input id="productMaterial" [(ngModel)]="currentProduct.material" type="text" class="form-control">
+        </div>
+    </div>
+
+    <div *ngIf="currentProduct.category.id === 2" class="form-group">
+        <label for="productDimensions">מידות גודל:</label>
+        <input id="productDimensions" [(ngModel)]="currentProduct.dimensions" type="text" class="form-control"
+            placeholder="רוחב × גובה × עומק">
+    </div>
+
+    <div class="form-group">
+        <label for="productDescription">תיאור כללי:</label>
+        <textarea id="productDescription" [(ngModel)]="currentProduct.description" class="form-control" rows="3"
+            placeholder="תאר את המוצר לפרטים"></textarea>
+    </div>
+
+    <div class="button-group">
+        <button class="btn save-btn">שערך מחיר</button>
+        <button (click)="cleanProductFields();" class="btn cancel-btn">ניקוי</button>
+    </div>
+</div>

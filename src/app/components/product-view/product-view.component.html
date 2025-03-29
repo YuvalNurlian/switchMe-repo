@@ -1,0 +1,50 @@
+<div class="product-view-container">
+  
+    <!-- 🔍 אזור הפילטרים -->
+    <!-- <div class="filter-section">
+        <h2>🔍 סינון מוצרים</h2>
+        
+        <div class="filter-row">
+            <div class="form-group">
+                <label for="search">חיפוש:</label>
+                <input id="search" [(ngModel)]="searchTerm" (input)="filterProducts()" class="form-control" placeholder="חפש מוצר...">
+            </div>
+            <div class="form-group">
+                <label for="category">קטגוריה:</label>
+                <select id="category" [(ngModel)]="selectedCategory" (change)="filterProducts()" class="form-control">
+                    <option value="">כל הקטגוריות</option>
+                    <option *ngFor="let category of categories" [ngValue]="category.id">{{ category.name }}</option>
+                </select>
+            </div>
+        </div>
+  
+        <div class="filter-row">
+            <div class="form-group">
+                <label for="minPrice">מחיר מינימלי:</label>
+                <input id="minPrice" [(ngModel)]="minPrice" type="number" class="form-control" (input)="filterProducts()">
+            </div>
+            <div class="form-group">
+                <label for="maxPrice">מחיר מקסימלי:</label>
+                <input id="maxPrice" [(ngModel)]="maxPrice" type="number" class="form-control" (input)="filterProducts()">
+            </div>
+        </div>
+    </div> -->
+  
+    <!-- 📦 רשימת המוצרים -->
+    <div class="product-list">
+        <h2>📦 רשימת מוצרים</h2>
+        <div *ngIf="filteredProducts.length > 0; else noProducts">
+            <div class="product-card" *ngFor="let product of filteredProducts">
+                <h3>{{ product.name }}</h3>
+                <p>מחיר: {{ product.price }} ₪</p>
+                <p>קטגוריה: {{ product.category.name }}</p>
+                <button class="btn details-btn" (click)="viewProduct(product)">🔎 פרטים</button>
+            </div>
+        </div>
+        <ng-template #noProducts>
+            <p class="no-products">❌ לא נמצאו מוצרים תואמים</p>
+        </ng-template>
+    </div>
+  
+  </div>
+  

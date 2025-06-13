@@ -1,25 +1,25 @@
 import { bootstrapApplication } from '@angular/platform-browser';
+import { provideAnimations } from '@angular/platform-browser/animations'; 
+
 import { AppComponent } from './app/app.component';
 import { appConfig } from './app/app.config';
 import { provideHttpClient } from '@angular/common/http';
-import { provideRouter } from '@angular/router'; // ✅ הוספת תמיכה בנתיבים
-import { routes } from './app/app.routes'; // ✅ ייבוא הנתיבים מהקובץ `app.routes.ts`
+import { provideRouter } from '@angular/router';
+import { routes } from './app/app.routes';
+
+import { provideFirebaseApp, initializeApp } from '@angular/fire/app';
+import { provideAuth, getAuth } from '@angular/fire/auth';
+import { provideFirestore, getFirestore } from '@angular/fire/firestore';
+import { environment } from './environments/environment';
 
 bootstrapApplication(AppComponent, {
   ...appConfig,
   providers: [
-    provideHttpClient(), // תמיכה ב-HTTP
-    provideRouter(routes) // ✅ הוספת מערכת הניווט
+    provideAnimations(),
+    provideHttpClient(),
+    provideRouter(routes),
+    provideFirebaseApp(() => initializeApp(environment.firebaseConfig)),
+    provideAuth(() => getAuth()),
+    provideFirestore(() => getFirestore()),
   ]
 }).catch((err) => console.error(err));
-
-
-
-
-// bootstrapApplication(AppComponent, {
-//   ...appConfig,
-//   providers: [
-//     provideHttpClient() // מוסיף תמיכה ב-HTTP עבור קריאות API
-//   ]
-// }).catch((err) => console.error(err));
-

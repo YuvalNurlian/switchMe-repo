@@ -1,14 +1,22 @@
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;" dir="rtl">
+    <div></div>
+    <div style="display: flex; gap: 10px;">
+      <button class="btn blue-btn" (click)="goToProductView()">🔍 צפייה במוצרים</button>
+      <button class="btn red-btn" (click)="logout()"> התנתק</button>
+    </div>
+  </div>
+
 <div class="product-edit-container">
-    <h2>עריכת מוצר</h2>
+    <h2>הוסף מוצר</h2>
 
     <div class="form-group">
-        <label for="productName">שם מוצר:</label>
+        <label for="productName"><span style="color: red;">*</span> שם מוצר: </label>
         <input id="productName" [(ngModel)]="currentProduct.name" type="text" class="form-control">
     </div>
 
     <div class="form-row">
         <div class="form-group">
-            <label for="productCategory">קטגוריה:</label>
+            <label for="productCategory"><span style="color: red;">*</span> קטגוריה:</label>
             <select id="productCategory" [(ngModel)]="currentProduct.category" (change)="print()" class="form-control">
                 <option *ngFor="let category of categories" [ngValue]="category">
                     {{ category.name }}
@@ -17,7 +25,7 @@
         </div>
 
         <div class="form-group">
-            <label for="productCondition">מצב המוצר:</label>
+            <label for="productCondition"><span style="color: red;">*</span> מצב המוצר:</label>
             <select id="productCondition" [(ngModel)]="currentProduct.condition" class="form-control">
                 <option *ngFor="let condition of conditions" [ngValue]="condition">
                     {{ condition?.name }}
@@ -28,20 +36,25 @@
 
     <div class="form-row">
         <div class="form-group">
-            <label for="productYears">שנות שימוש:</label>
+            <label for="productYears"><span style="color: red;">*</span> שנות שימוש:</label>
             <input id="productYears" [(ngModel)]="currentProduct.yearsUsed" type="number" class="form-control">
         </div>
 
         <div class="form-group">
-            <label for="productManufacturer">יצרן:</label>
+            <label for="productManufacturer"><span style="color: red;">*</span> יצרן:</label>
             <input id="productManufacturer" [(ngModel)]="currentProduct.manufacturer" type="text" class="form-control">
         </div>
     </div>
+    <div *ngIf="currentProduct.yearsUsed < 0" style="color: red; font-weight: bold;">
+        שנות שימוש לא יכול להיות שלילי
+      </div>
 
     <div class="form-row">
         <div class="form-group" >
-            <label for="productPrice">מחיר רכישה:</label>
-            <input id="productPrice" [(ngModel)]="currentProduct.purchasePrice" type="number" class="form-control">
+            <label for="productPrice"><span style="color: red;">*</span> מחיר רכישה:</label>
+            <input id="productPrice" [(ngModel)]="currentProduct.purchasePrice"
+            (ngModelChange)="onPriceChange($event)"
+            type="number" class="form-control">
         </div>
 
         <div *ngIf="[1, 2, 4].includes(currentProduct.category.id)" class="form-group">
@@ -49,6 +62,9 @@
             <input id="productMaterial" [(ngModel)]="currentProduct.material" type="text" class="form-control">
         </div>
     </div>
+    <div *ngIf="!isPricePositive" style="color: red; font-weight: bold;">
+        מחיר לא יכול להיות שלילי או 0. אנא הכנס מחיר חיובי.
+      </div>
 
     <div *ngIf="currentProduct.category.id === 2" class="form-group">
         <label for="productDimensions">מידות גודל:</label>
@@ -61,9 +77,99 @@
         <textarea id="productDescription" [(ngModel)]="currentProduct.description" class="form-control" rows="3"
             placeholder="תאר את המוצר לפרטים"></textarea>
     </div>
+    <p style="color: #dc3545; font-size: 14px; text-align: right; margin-top: 8px;">
+        * עליך למלא את שדות החובה כדי לשערך מחיר
+      </p>
 
-    <div class="button-group">
-        <button class="btn save-btn">שערך מחיר</button>
-        <button (click)="cleanProductFields();" class="btn cancel-btn">ניקוי</button>
-    </div>
+    <div class="button-group" *ngIf="!productAdded">
+        <button
+          type="button"
+          (click)="estimateProductPrice()"
+          [disabled]="isEstimateButtonDisabled()"
+          class="btn save-btn"
+        >
+          {{ loadingEstimate ? 'מחשבים…' : 'שערוך מחיר' }}
+        </button>
+      
+        <button
+          type="button"
+          (click)="cleanProductFields()"
+          class="btn cancel-btn"
+        >
+          ניקוי
+        </button>
+        
+      </div>
+
+      <p *ngIf="productAdded" style="text-align:center; color:green; font-weight:600;">
+        ✅ המוצר נוסף בהצלחה!
+      </p>
 </div>
+
+<!-- דיאלוג לבחירת מחיר -->
+<p-dialog
+  header="בחר מחיר"
+  [(visible)]="showEstimateDialog"
+  [modal]="true"
+  [dismissableMask]="true"
+  [style]="{ width: '400px' }"
+  [maskStyle]="{ 'background-color': 'rgba(0, 0, 0, 0.5)' }"
+  styleClass="custom-dialog rtl-dialog"
+  [contentStyle]="{
+    'background-color': '#ffffff',
+    'border-radius': '8px',
+    'padding': '1rem',
+    'direction': 'rtl',
+    'text-align': 'right'
+  }"
+>
+  <div class="p-fluid">
+    <!-- <p>טווח מחירים: <strong>{{ estimateResult?.minPrice }} – {{ estimateResult?.maxPrice }}</strong></p> -->
+    <p style="margin-bottom: 6px;">
+        טווח המחירים הוערך אוטומטית על ידי AI לפי פרטי המוצר      </p>
+    
+      <p style="font-weight: bold;">
+        טווח מחירים: {{ estimateResult?.minPrice }} – {{ estimateResult?.maxPrice }} ₪
+      </p>
+
+    <div class="form-group">
+        <label>הזן מחיר לפרסום באתר:</label>
+        <input
+        type="number"
+        [(ngModel)]="currentProduct.price"
+        class="form-control p-inputtext"
+        placeholder="בחר ערך בין הטווח"
+        (input)="checkIfPriceInRange()"
+      />
+    </div>
+
+    <p *ngIf="currentProduct?.approvedByAI"
+    class="p-mt-2"
+    style="font-weight:600; color:#28a745;">
+   המחיר שהזנת בטווח ולכן מאושר ע״י AI
+ </p>
+ <p *ngIf="!currentProduct?.approvedByAI"
+ class="p-mt-2"
+ style="font-weight:600; color:#a72828;">
+המחיר אינו בטווח ואינו יקבל תגית אישור AI
+</p>
+  </div>
+
+  <ng-template pTemplate="footer">
+    <button
+      pButton
+      type="button"
+      label="ביטול"
+      styleClass="btn cancel-btn"
+      (click)="showEstimateDialog = false"
+    ></button>
+    <button
+      pButton
+      type="button"
+      label="הוסף למוצרים שלי"
+      styleClass="btn save-btn"
+      (click)="insertNewProducts()"
+    ></button>
+  </ng-template>
+</p-dialog>
+

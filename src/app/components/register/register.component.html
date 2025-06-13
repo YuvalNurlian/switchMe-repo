@@ -1,0 +1,26 @@
+<div class="register-container">
+  <h1 style="color: #007bff;">switch me</h1>
+  <h2>הרשמה</h2>
+
+  <form [formGroup]="form" (ngSubmit)="onSubmit()">
+    <input formControlName="nickname" type="text"     placeholder="שם"           dir="rtl" />
+    <input formControlName="email"    type="email"    placeholder="אימייל"       dir="rtl" />
+    <input formControlName="phone"    type="tel"      placeholder="מספר טלפון"   dir="rtl" />
+    <input formControlName="password" type="password" placeholder="סיסמה"       dir="rtl" />
+
+    <select formControlName="gender" dir="rtl">
+      <option value="" disabled>מין</option>
+      <option value="male">זכר</option>
+      <option value="female">נקבה</option>
+      <option value="other">אחר</option>
+    </select>
+
+
+    <input formControlName="birthDate" type="date" placeholder="תאריך לידה" dir="rtl" dateFormat="dd/mm/yy"/>
+
+    <button type="submit" [disabled]="form.invalid">הרשמה</button>
+    <div *ngIf="emailNotUniqe" style="color: red;">
+      אימייל זה כבר רשום במערכת
+    </div>
+  </form>
+</div>

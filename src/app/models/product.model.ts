@@ -12,9 +12,13 @@ export class Product {
   description: string;
   price: number;
   approvedByAI: boolean;
+
+  countInterestedUsers : number;
   
   material: string;
   dimensions: string;
+  
+  userId!: string;
 
   constructor() {
     this.id = 0;
@@ -29,14 +33,12 @@ export class Product {
     this. purchasePrice = 0;
     this.material = '';
     this.dimensions = '';
+    this.countInterestedUsers = 0;
   }
 
-  // שנת רכישה 
-  // מצב המוצר
-  // יצרן
-  // מחיר רכישה
-  //חומר עיקרי - ריהוט ביגוד וציוד ספורט
-  //מידות - לריהוט וציוד ספורט
-  // תמונה?
-  // 
+}
+
+export interface ExchangeMatch {
+  myProduct: Product;
+  matchedProduct: Product;
 }

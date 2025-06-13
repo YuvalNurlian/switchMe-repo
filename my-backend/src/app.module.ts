@@ -4,6 +4,8 @@ import { AppService } from './app.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { CategoryModule } from './category/category.module';
 import { ConditionModule } from './condition/condition.module';
+import { ProductModule } from './product/product.module'; // ✅ ייבוא המודול החסר
+
 
 
 @Module({
@@ -19,7 +21,8 @@ import { ConditionModule } from './condition/condition.module';
       synchronize: true, // יוצר טבלאות אוטומטית (לשלב פיתוח בלבד!)
     }),
     ConditionModule,
-    CategoryModule
+    CategoryModule,
+    ProductModule 
   ],
   controllers: [AppController],
   providers: [AppService],

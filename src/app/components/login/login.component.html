@@ -1,0 +1,16 @@
+<div class="login-container" dir="rtl">
+    <h1 style="color: #007bff;" > switch me</h1>
+    <h2>התחברות</h2>
+    <div *ngIf="errorMessage" class="error-message">
+      {{ errorMessage }}
+    </div>
+    <form [formGroup]="form" (ngSubmit)="onSubmit()">
+      <input formControlName="email" type="email" placeholder="אימייל" dir="rtl" />
+      <input formControlName="password" type="password" placeholder="סיסמה" dir="rtl" />
+      <button type="submit" [disabled]="form.invalid">התחברות</button>
+    </form>
+    <div class="register-link">
+      אין לך חשבון? <a href="#" (click)="goToCreateAccount(); $event.preventDefault();"  >צור משתמש חדש</a>
+    </div>
+  </div>
+  

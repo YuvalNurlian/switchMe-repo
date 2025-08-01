@@ -7,7 +7,7 @@ import { ConditionService } from '../../services/condition.service';
 import { Condition } from '../../models/condition.model';
 import { AuthService } from '../../auth.service';
 import { CommonModule } from '@angular/common';
-import { FormsModule }         from '@angular/forms';  
+import { FormsModule }         from '@angular/forms';
 import { Router } from '@angular/router';
 import { forkJoin } from 'rxjs';
 
@@ -16,8 +16,8 @@ import { forkJoin } from 'rxjs';
 @Component({
   selector: 'app-product-view',
   standalone: true,
-  imports: [CommonModule,FormsModule   
-  ], 
+  imports: [CommonModule,FormsModule
+  ],
   templateUrl: './product-view.component.html',
   styleUrl: './product-view.component.css'
 })
@@ -53,6 +53,9 @@ export class ProductViewComponent implements OnInit {
   //matches
   exchangeMatches: ExchangeMatch[] = [];
   showExchangeMatches: boolean = false;
+
+  // Sorting
+  scoreSortOrder: 'asc' | 'desc' | null = null;
 
 
 
@@ -93,9 +96,18 @@ export class ProductViewComponent implements OnInit {
     //   this.userName = data?.['nickname'] ? data?.['nickname']  : '' ;
 
     //   const jsDate: Date = data?.['birthDate']?.toDate();
-    //   console.log(jsDate.toLocaleDateString());     
+    //   console.log(jsDate.toLocaleDateString());
     // })
     // .catch(err => console.error('שגיאה בקבלת משתמש:', err));
+  }
+
+  sortProductsByScore(): void {
+    if (this.scoreSortOrder === 'asc') {
+      this.scoreSortOrder = 'desc';
+    } else {
+      this.scoreSortOrder = 'asc';
+    }
+    this.filterProducts(); // Re-apply filters and sort
   }
 
   loadMatchesByCurrentUser(): void {
@@ -103,56 +115,32 @@ export class ProductViewComponent implements OnInit {
       next: (data: any[]) => {
         this.exchangeMatches = data.map(match => ({
           matchedProduct: {
-            id: match.product1_id,
-            name: match.name1,
-            description: match.description1 || '',
-            category: this.categories.find(c => c.id === match.category1) || { id: 0, name: 'לא ידוע' },
-            condition: this.conditions.find(c => c.id === match.condition1) || { id: 0, name: 'לא ידוע' },
-            purchasePrice: match.purchaseprice1 || 0,
-            price: match.price1 || 0,
-            approvedByAI: match.approvedbyai1,
-            manufacturer: match.manufacturer1 || '',
-            yearsUsed: match.yearsused1 || 0,
-            material: match.material1 || '',
-            dimensions: match.dimensions1 || '',
-            userId: match.user2_id,
-            countInterestedUsers: 0
+            name: match.offered_product_name,
+            price: match.offered_product_price || 0,
+            userId: match.user_id
           },
           myProduct: {
-            id: match.product2_id,
-            name: match.name2,
-            description: match.description2 || '',
-            category: this.categories.find(c => c.id === match.category2) || { id: 0, name: 'לא ידוע' },
-            condition: this.conditions.find(c => c.id === match.condition2) || { id: 0, name: 'לא ידוע' },
-            purchasePrice: match.purchaseprice2 || 0,
-            price: match.price2 || 0,
-            approvedByAI: match.approvedbyai2,
-            manufacturer: match.manufacturer2 || '',
-            yearsUsed: match.yearsused2 || 0,
-            material: match.material2 || '',
-            dimensions: match.dimensions2 || '',
-            userId: match.user1_id,
-            countInterestedUsers: 0
-          }
+            name: match.my_product_name,
+            price: match.my_product_price || 0,
+            userId: match.user_id
+          },
+          score: match.score
         }));
         console.log("mathces ---- > " , this.exchangeMatches);
-        
+
       },
       error: err => console.error('שגיאה בטעינת התאמות:', err)
     });
   }
-  
 
-  showContactDetails(product: Product): void {
-    console.log(product.userId);
-    
-    const uid = (product as any).user_id ? (product as any).user_id : (product as any).userId;
-    if (!uid) {
+
+  showContactDetails(userId: string): void {
+    if (!userId) {
       alert("לא נמצא מזהה משתמש.");
       return;
     }
-  
-    this.authService.getUserDataById(uid)
+
+    this.authService.getUserDataById(userId)
       .then(data => {
         if (data) {
           alert(
@@ -167,10 +155,28 @@ export class ProductViewComponent implements OnInit {
       });
   }
 
+  handleExchange(myProduct: { name: string; price: number; userId: string; }, matchedProduct: { name: string; price: number; userId: string; }): void {
+    if (!confirm(`האם אתה בטוח שברצונך להחליף את \"${myProduct.name}\" ב- \"${matchedProduct.name}\"?`)) {
+      return;
+    }
+
+    this.productService.performExchange(myProduct.userId, matchedProduct.userId, myProduct.name, matchedProduct.name).subscribe({
+      next: () => {
+        alert('ההחלפה בוצעה בהצלחה!');
+        // Optionally, refresh data or navigate away
+        this.loadMatchesByCurrentUser(); // Reload matches after exchange
+      },
+      error: (err) => {
+        console.error('שגיאה בביצוע ההחלפה:', err);
+        alert('אירעה שגיאה בעת ביצוע ההחלפה. אנא נסה שוב.');
+      }
+    });
+  }
+
   isProductLiked(productId: number): boolean {
     return this.likedProducts.some(p => p.id === productId);
   }
-  
+
   isProductDisliked(productId: number): boolean {
     return this.dislikedProducts.some(p => p.id === productId);
   }
@@ -181,13 +187,14 @@ export class ProductViewComponent implements OnInit {
     this.minPrice = null;
     this.maxPrice = null;
     this.hideDisliked = false;
+    this.scoreSortOrder = null; // Reset sort order
     this.filterProducts();
   }
 
   filterProducts(): void {
     const term = this.searchTerm.trim().toLowerCase();
 
-    this.filteredProducts = this.products.filter(product => {
+    let tempFilteredProducts = this.products.filter(product => {
       const matchesSearchTerm = term === '' || (product.name?.toLowerCase().includes(term) ?? false);
 
       const matchesCategory   = this.selectedCategory   ? product.category.id   === +this.selectedCategory   : true;
@@ -199,11 +206,20 @@ export class ProductViewComponent implements OnInit {
       const matchesDislikedFilter = this.hideDisliked ? !isDisliked : true;
       return matchesSearchTerm && matchesCategory && matchesCondition && matchesMinPrice && matchesMaxPrice && matchesDislikedFilter;
     });
+
+    // Apply sorting by score
+    if (this.scoreSortOrder === 'desc') {
+      tempFilteredProducts.sort((a, b) => (b.score ?? 0) - (a.score ?? 0));
+    } else if (this.scoreSortOrder === 'asc') {
+      tempFilteredProducts.sort((a, b) => (a.score ?? 0) - (b.score ?? 0));
+    }
+
+    this.filteredProducts = tempFilteredProducts;
   }
 
   viewProduct(product: Product): void {
     console.log(product);
-    
+
     this.selectedProduct = product;
     this.showProductDetails = true;
   }
@@ -228,25 +244,25 @@ export class ProductViewComponent implements OnInit {
   }
 
   loadProductsByUser(): void {
-    const uid = 
+    const uid =
     //"cZ0uZokmNNeqw1Aufo5A0Arxj4z2" ;
     //"7rTeyEtBsdZWQwNJmqjACsCQ7vl1";
     this.authService.getCurrentUserId();
-    if (!uid) 
+    if (!uid)
       {
         console.log("my products error with: UID");
 
         return;
       }
       console.log(uid);
-      
+
     this.productService.getProductsByUserId(uid).subscribe({
       next: (data: Product[]) => {
         console.log('📦 מוצרים של המשתמש נטענו:', data);
         this.myProducts = data.map(product => {
           const categoryId = (product as any).category_id;
           const conditionId = (product as any).condition_id;
-  
+
           product.category = this.categories.find(cat => cat.id === +categoryId) || { id: categoryId, name: 'לא ידוע' };
           product.condition = this.conditions.find(cond => cond.id === +conditionId) || { id: conditionId, name: 'לא ידוע' };
           product.approvedByAI = (product as any).approvedbyai;
@@ -264,7 +280,7 @@ export class ProductViewComponent implements OnInit {
       console.error("⚠️ שגיאה: לא נמצא UID בעת טעינת מוצרים שאהב");
       return;
     }
-  
+
     this.productService.getProductsByInterest(uid, 1).subscribe({
       next: (data: Product[]) => {
         this.likedProducts = data;
@@ -273,14 +289,14 @@ export class ProductViewComponent implements OnInit {
       error: (err) => console.error('❌ שגיאה בטעינת מוצרים שאהב:', err)
     });
   }
-  
+
   loadDislikedProducts(): void {
     const uid = this.authService.getCurrentUserId();
     if (!uid) {
       console.error("⚠️ שגיאה: לא נמצא UID בעת טעינת מוצרים שלא אהב");
       return;
     }
-  
+
     this.productService.getProductsByInterest(uid, 0).subscribe({
       next: (data: Product[]) => {
         this.dislikedProducts = data;
@@ -291,11 +307,11 @@ export class ProductViewComponent implements OnInit {
   }
 
   loadProducts(): void {
-    const uid = 
+    const uid =
     //"cZ0uZokmNNeqw1Aufo5A0Arxj4z2" ;
     //"7rTeyEtBsdZWQwNJmqjACsCQ7vl1";
     this.authService.getCurrentUserId();
-    if (!uid) 
+    if (!uid)
       {
         console.log("load all products error with: UID");
         return;
@@ -306,16 +322,17 @@ export class ProductViewComponent implements OnInit {
         this.products = data.map(product => {
           const categoryId = (product as any).category_id;
           const conditionId = (product as any).condition_id;
-  
+
           product.category = this.categories.find(cat => cat.id === +categoryId) || { id: categoryId, name: 'לא ידוע' };
           product.condition = this.conditions.find(cond => cond.id === +conditionId) || { id: conditionId, name: 'לא ידוע' };
           product.approvedByAI = (product as any).approvedbyai;
+          product.score = (product as any).score; // Map the score
           return product;
         });
-  
+
         this.filteredProducts = this.products;
         console.log(this.filteredProducts);
-        
+
       },
       error: (err: any) => console.error('❌ שגיאה בטעינת מוצרים:', err)
     });
@@ -326,11 +343,11 @@ export class ProductViewComponent implements OnInit {
     this.productService.getPotentialExchangeProducts(productId).subscribe({
       next: (data: Product[]) => {
         console.log( "potential products: ", data);
-  
+
         this.filteredProducts = data.map(product => {
           const categoryId = (product as any).category_id;
           const conditionId = (product as any).condition_id;
-  
+
           product.category = this.categories.find(cat => cat.id === +categoryId) || { id: categoryId, name: 'לא ידוע' };
           product.condition = this.conditions.find(cond => cond.id === +conditionId) || { id: conditionId, name: 'לא ידוע' };
           product.approvedByAI = (product as any).approvedbyai;
@@ -346,16 +363,16 @@ export class ProductViewComponent implements OnInit {
       alert("לא זוהה משתמש.");
       return;
     }
-  
+
     this.productService.markAsInterested(this.userId, productId).subscribe({
       next: () => {
         alert('המוצר נוסף לרשימה שלך!');
-  
+
         const product = this.products.find(p => p.id === productId);
         if (product && !this.likedProducts.some(p => p.id === productId)) {
           this.likedProducts.push(product);
         }
-  
+
         this.dislikedProducts = this.dislikedProducts.filter(p => p.id !== productId);
         this.filterProducts();
       },
@@ -371,16 +388,16 @@ export class ProductViewComponent implements OnInit {
       alert("לא זוהה משתמש.");
       return;
     }
-  
+
     this.productService.markAsNotInterested(this.userId, productId).subscribe({
       next: () => {
         alert('תודה, נציג לך פחות מוצרים דומים');
-  
+
         const product = this.products.find(p => p.id === productId);
         if (product && !this.dislikedProducts.some(p => p.id === productId)) {
           this.dislikedProducts.push(product);
         }
-  
+
         this.likedProducts = this.likedProducts.filter(p => p.id !== productId);
         this.filterProducts();
       },
@@ -390,7 +407,7 @@ export class ProductViewComponent implements OnInit {
       }
     });
   }
-  
+
 
 
   logout(): void {
@@ -400,9 +417,9 @@ export class ProductViewComponent implements OnInit {
   }
 
   navigateToAboutUs(): void {
-    
+
     this.router.navigate(['/about-us']);
-  
+
   }
 
   navigateToProductEdit()
@@ -422,7 +439,7 @@ export class ProductViewComponent implements OnInit {
         }
       });
     }
-  
+
     loadCategories(): void {
       this.categoryService.getCategories().subscribe({
         next: (data) => {

@@ -1,5 +1,6 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
+import { ExchangeMatchesGeneratorService } from './exchange-matches/exchange-matches-generator.service';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -10,5 +11,9 @@ async function bootstrap() {
       credentials: true, // אם יש צורך באימות (כגון JWT)
     });
   await app.listen(process.env.PORT ?? 3000);
+
+  // Call generateAndSaveExchangeMatches on startup
+  const exchangeMatchesGeneratorService = app.get(ExchangeMatchesGeneratorService);
+  await exchangeMatchesGeneratorService.generateAndSaveExchangeMatches();
 }
 bootstrap();

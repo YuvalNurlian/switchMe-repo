@@ -9,4 +9,5 @@ export class CategoryController {
   async getAllCategories(): Promise<any[]> {
     return this.categoryService.getAllCategories();
   }
+
 }

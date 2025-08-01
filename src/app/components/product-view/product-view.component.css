@@ -525,6 +525,33 @@
     background-color: #3498db;
     color: white;
   }
+
+  .sort-by-score-btn {
+    height: 36px;
+    padding: 0 14px;
+    margin-top: 8px; /* Align with other inputs */
+    font-size: 14px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    background-color: white;
+    color: #2c3e50;
+    cursor: pointer;
+    transition: border-color 0.2s, box-shadow 0.2s, background-color 0.2s, color 0.2s;
+  }
+
+  .sort-by-score-btn:hover {
+    border-color: #3498db;
+    box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+    background-color: #3498db;
+    color: white;
+  }
+
+  .sort-by-score-btn:focus {
+    outline: none;
+    border-color: #3498db;
+    box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+  }
+
   button:disabled,
 .action-btn:disabled,
 .not-interested-btn:disabled {

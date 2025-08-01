@@ -83,6 +83,7 @@
     הסתר לא מעניינים
   </label>
   <button class="clear-filters-btn" (click)="clearFilters()">🧹 נקה סינון</button>
+  <button class="sort-by-score-btn" (click)="sortProductsByScore()">התאמה {{ scoreSortOrder === 'desc' ? '⬇' : '⬆' }}</button>
 </div>
 
 <!-- … שאר הקוד של הטבלה … -->
@@ -98,19 +99,21 @@
           <th>מחיר</th>
           <th>מצב</th>
           <th>מאושר ע"י AI</th>
+          <th> התאמה באמצעות RandomForest</th>
         </tr>
       </thead>
       <tbody>
         <tr *ngFor="let product of filteredProducts" (click)="viewProduct(product)" class="clickable-row" >
           <td>{{ product?.name }}</td>
           <td>{{ product?.category?.name }}</td>
-           <td>{{ product?.price | currency:'ILS' }}</td> 
+           <td>{{ product?.price | currency:'ILS' }}</td>
           <td>{{ product?.condition?.name }}</td>
           <td>
             <span [ngClass]="{'approved': product.approvedByAI, 'not-approved': !product.approvedByAI}">
               {{ product?.approvedByAI ? '✔' : '✘' }}
             </span>
           </td>
+          <td>{{ product?.score != null ? ((product.score || 0) * 100).toFixed(0) + '%' : 'N/A' }}</td>
         </tr>
       </tbody>
     </table>
@@ -128,7 +131,7 @@
       <p *ngIf="selectedProduct?.material" ><strong>חומר:</strong> {{ selectedProduct?.material }}</p>
       <p *ngIf="selectedProduct?.dimensions" ><strong>מידות:</strong> {{ selectedProduct?.dimensions }}</p>
       <p><strong>תיאור:</strong> {{ selectedProduct?.description }}</p>
-  
+
       <div style="margin-top: 20px;">
         <button
         class="action-btn"
@@ -143,24 +146,24 @@
       (click)="markProductAsNotInterested(selectedProduct!.id)">
       ❌ {{ isProductDisliked(selectedProduct!.id) ? 'סימנת כלא מעניין' : 'לא מעניין אותי' }}
     </button>
-        <!-- <button class="action-btn"  (click)="markProductAsInterested(selectedProduct!.id)" >✅ המוצר מעניין אותי</button> 
+        <!-- <button class="action-btn"  (click)="markProductAsInterested(selectedProduct!.id)" >✅ המוצר מעניין אותי</button>
         <button class="action-btn not-interested-btn" (click)="markProductAsNotInterested(selectedProduct!.id)">
           ❌ המוצר לא מעניין אותי
         </button> -->
-         <button class="action-btn light" (click)="showContactDetails(selectedProduct!)" >📞 הצג פרטי איש קשר</button> 
+         <button class="action-btn light" (click)="showContactDetails(selectedProduct!.userId)" >📞 הצג פרטי איש קשר</button>
       </div>
-  
+
       <button class="close-btn" (click)="showProductDetails = false">✖ סגור</button>
     </div>
   </div>
-  
+
   <div class="overlay" *ngIf="showMyProducts">
     <div class="modal">
       <h3>המוצרים שלי</h3>
       <button class="close-btn" (click)="showMyProducts = false">✖ סגור</button>
-  
+
       <table class="product-table">
-        
+
         <thead>
             <tr>
               <th>שם מוצר</th>
@@ -195,7 +198,7 @@
               </td>
             </tr>
           </tbody>
-          
+
 
       </table>
     </div>
@@ -205,7 +208,7 @@
     <div class="modal">
       <h3>המוצרים שאהבתי</h3>
       <button class="close-btn" (click)="showLikedProducts = false">✖ סגור</button>
-  
+
       <table class="product-table">
         <thead>
           <tr>
@@ -229,7 +232,7 @@
               </span>
             </td> -->
             <td>
-              <button class="action-btn light" (click)="showContactDetails(product)">📞 פרטי איש קשר</button>
+              <button class="action-btn light" (click)="showContactDetails(product.userId)">📞 פרטי איש קשר</button>
               <button class="action-btn not-interested-btn" (click)="markProductAsNotInterested(product.id)">כבר לא מעוניין</button>
             </td>
           </tr>
@@ -242,30 +245,28 @@
     <div class="modal">
       <h3>הצעות להחלפה</h3>
       <button class="close-btn" (click)="showExchangeMatches = false">✖ סגור</button>
-  
+
       <table class="product-table">
         <thead>
           <tr>
-            <th>המוצר שלי</th>
-            <th>⇄</th>
-            <th>מוצר תואם</th>
+            <th>שם המוצר שלי</th>
+            <th>מחיר המוצר שלי</th>
+            <th>שם המוצר שיכול להתאים</th>
+            <th>מחיר המוצר שיכול להתאים</th>
+            <th>התאמה</th>
             <th>פעולות</th>
           </tr>
         </thead>
         <tbody>
           <tr *ngFor="let match of exchangeMatches">
+            <td>{{ match.myProduct.name }}</td>
+            <td>{{ match.myProduct.price | currency:'ILS' }}</td>
+            <td>{{ match.matchedProduct.name }}</td>
+            <td>{{ match.matchedProduct.price | currency:'ILS' }}</td>
+            <td>{{ (match.score * 100).toFixed(0) }}%</td>
             <td>
-              {{ match.myProduct.name }}<br>
-              <strong>{{ match.myProduct.price | currency:'ILS' }}</strong>
-            </td>
-            <td style="font-weight: bold;">⇄</td>
-            <td>
-              {{ match.matchedProduct.name }}<br>
-              <strong>{{ match.matchedProduct.price | currency:'ILS' }}</strong>
-            </td>
-            <td>
-              <button class="action-btn light" (click)="showContactDetails(match.matchedProduct)">
-                📞 פרטי איש קשר
+              <button class="action-btn" (click)="handleExchange(match.myProduct, match.matchedProduct)">
+                האם להחליף?
               </button>
             </td>
           </tr>
@@ -273,8 +274,8 @@
       </table>
     </div>
   </div>
-  
-  
+
+
 
 
 
@@ -314,7 +315,7 @@
     <!-- 🔍 אזור הפילטרים -->
     <!-- <div class="filter-section">
         <h2>🔍 סינון מוצרים</h2>
-        
+
         <div class="filter-row">
             <div class="form-group">
                 <label for="search">חיפוש:</label>
@@ -328,7 +329,7 @@
                 </select>
             </div>
         </div>
-  
+
         <div class="filter-row">
             <div class="form-group">
                 <label for="minPrice">מחיר מינימלי:</label>
@@ -340,7 +341,7 @@
             </div>
         </div>
     </div> -->
-  
+
     <!-- 📦 רשימת המוצרים -->
     <!-- <div class="product-list">
         <h2>📦 רשימת מוצרים</h2>
@@ -356,5 +357,4 @@
             <p class="no-products">❌ לא נמצאו מוצרים תואמים</p>
         </ng-template>
     </div> -->
-  
-  
+

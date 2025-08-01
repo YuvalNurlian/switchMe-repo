@@ -10,7 +10,7 @@ export class ProductController {
   async getNotMyProducts(@Param('uid') uid: string): Promise<any[]> {
     return this.productService.getAllProducts(uid);
   }
-  
+
 
   @Get('user/:uid')
   async getByUser(@Param('uid') uid: string): Promise<any[]> {
@@ -31,14 +31,14 @@ export class ProductController {
   }
 
 
-  @Post('mark-as-interested') 
+  @Post('mark-as-interested')
   @HttpCode(HttpStatus.CREATED)
   async markAsInterested(@Body() body: { userId: string, productId: number }): Promise<any> {
     const { userId, productId } = body;
     return this.productService.markAsInterested(userId, productId);
   }
 
-  @Post('mark-as-not-interested') 
+  @Post('mark-as-not-interested')
   @HttpCode(HttpStatus.CREATED)
   async markAsNotInterested(@Body() body: { userId: string, productId: number }): Promise<any> {
     const { userId, productId } = body;
@@ -61,6 +61,13 @@ async getProductsByInterest(
 @Get('mutual-exchange/:userId')
 async getMutualExchange(@Param('userId') userId: string): Promise<any[]> {
   return this.productService.getMutualExchangeMatches(userId);
+}
+
+@Post('perform-exchange')
+@HttpCode(HttpStatus.OK)
+async performExchange(@Body() body: { myProductUserId: string, matchedProductUserId: string, myProductName: string, matchedProductName: string }): Promise<any> {
+  const { myProductUserId, matchedProductUserId, myProductName, matchedProductName } = body;
+  return this.productService.performExchange(myProductUserId, matchedProductUserId, myProductName, matchedProductName);
 }
 
 

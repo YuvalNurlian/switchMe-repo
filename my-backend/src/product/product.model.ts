@@ -1,5 +1,6 @@
 // src/product/product.model.ts
 export interface Product {
+    id?: number; // Optional, as it might not be present on creation
     name: string;
     category: { id: number };
     condition: { id: number };

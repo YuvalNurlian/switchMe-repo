@@ -5,14 +5,17 @@ import { ProductService } from './product.service';
 import { PriceEstimateController } from './price-estimate.controller';
 import { PriceEstimateService } from './price-estimate.service';
 
+import { ExchangeMatchesModule } from '../exchange-matches/exchange-matches.module';
+
 @Module({
+  imports: [ExchangeMatchesModule],
   controllers: [
     ProductController,
     PriceEstimateController,  //price estimate
   ],
   providers: [
     ProductService,
-    PriceEstimateService,     //price estimate 
+    PriceEstimateService,     //price estimate
   ],
   exports: [ProductService],
 })

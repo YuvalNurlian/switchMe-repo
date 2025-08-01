@@ -14,6 +14,7 @@ export class Product {
   approvedByAI: boolean;
 
   countInterestedUsers : number;
+  score?: number; // New property for product score
   
   material: string;
   dimensions: string;
@@ -34,11 +35,13 @@ export class Product {
     this.material = '';
     this.dimensions = '';
     this.countInterestedUsers = 0;
+    this.score = undefined;
   }
 
 }
 
 export interface ExchangeMatch {
-  myProduct: Product;
-  matchedProduct: Product;
+  myProduct: { name: string; price: number; userId: string; };
+  matchedProduct: { name: string; price: number; userId: string; };
+  score: number;
 }

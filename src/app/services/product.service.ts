@@ -56,4 +56,8 @@ export class ProductService {
     return this.http.get<any[]>(`${this.apiUrl}/mutual-exchange/${userId}`);
   }
 
+  performExchange(myProductUserId: string, matchedProductUserId: string, myProductName: string, matchedProductName: string): Observable<any> {
+    return this.http.post(`${this.apiUrl}/perform-exchange`, { myProductUserId, matchedProductUserId, myProductName, matchedProductName });
+  }
+
 }

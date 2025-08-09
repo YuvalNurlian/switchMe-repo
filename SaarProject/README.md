@@ -16,6 +16,8 @@ cd SaarProject
 
 # Create a virtual environment (if you haven't already)
 python3 -m venv venv
+or
+python -m venv venv
 
 # Activate the virtual environment
 source venv/bin/activate

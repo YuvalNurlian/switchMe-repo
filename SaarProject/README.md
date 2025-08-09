@@ -48,7 +48,7 @@ Please execute the SQL commands from `my-backend/new tables.txt` in your Postgre
 Once the environment is set up and database structures are in place, you can start the FastAPI server:
 
 ```bash
-uvicorn main:app --reload
+uvicorn main:app --host 127.0.0.1--port 8000
 ```
 
 This will start the server, typically accessible at `http://127.0.0.1:8000`.

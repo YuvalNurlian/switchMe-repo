@@ -21,6 +21,8 @@ python -m venv venv
 
 # Activate the virtual environment
 source venv/bin/activate
+or
+.\venv\Scripts\Activate.ps1
 ```
 
 ### 2. Install Dependencies

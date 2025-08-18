@@ -1,0 +1,48 @@
+CREATE TABLE user_product_scores (
+    user_id VARCHAR(255) NOT NULL,
+    product_id INTEGER NOT NULL,
+    product_name VARCHAR(255) NOT NULL,
+    score REAL NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+
+DROP VIEW IF EXISTS user_product_offer_features_view;
+
+CREATE VIEW user_product_offer_features_view AS
+SELECT
+  up.user_id,
+
+  -- Owned product
+  up.id AS user_product_id,
+  up.name AS user_product_name,
+  up.category_id AS user_prod_category_id,
+  up.condition_id AS user_prod_condition_id,
+  up.manufacturer AS user_prod_manufacturer,
+  up.yearsused AS user_prod_years_used,
+  up.purchaseprice AS user_prod_purchase_price,
+
+  -- Offered product
+  op.id AS offered_product_id,
+  op.name AS offered_product_name,
+  op.category_id AS offered_prod_category_id,
+  op.condition_id AS offered_prod_condition_id,
+  op.manufacturer AS offered_prod_manufacturer,
+  op.yearsused AS offered_prod_years_used,
+  op.price AS offered_prod_price,
+  op.approvedbyai AS ai_approved_both,
+
+  -- Derived features
+  CASE WHEN up.category_id = op.category_id THEN 1 ELSE 0 END AS category_match_score,
+  CASE WHEN up.manufacturer = op.manufacturer THEN 1 ELSE 0 END AS brand_match,
+  ABS(up.condition_id - op.condition_id) AS condition_diff,
+  ABS(up.yearsused - op.yearsused) AS years_used_diff,
+  ABS(up.purchaseprice - op.price) AS value_diff,
+  ROUND(
+    CASE WHEN up.purchaseprice > 0 THEN
+      ABS(up.purchaseprice - op.price) / up.purchaseprice
+    ELSE NULL END, 2
+  ) AS relative_value_diff
+
+FROM products up
+JOIN products op ON op.user_id <> up.user_id;

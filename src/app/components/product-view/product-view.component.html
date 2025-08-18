@@ -1,0 +1,360 @@
+
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;" dir="rtl">
+  <div style="display: flex;" >
+    <button class="round-button blue" (click)="navigateToProductEdit()" >הוסף מוצר</button>
+    <button class="round-button blue" (click)="showMyProducts = true" >המוצרים שלי</button>
+    <button class="round-button blue" (click)="showLikedProducts = true">💙  המוצרים שאהבתי</button>
+    <button class="round-button blue" (click)="showExchangeMatches = true">🔁  הצעות להחלפה</button>
+
+
+    <!-- class="my-products-btn"  -->
+  </div>
+  <div>
+
+    <button class="round-button" style="background-color: rgb(255, 196, 0);" (click)="navigateToAboutUs()">מי אנחנו ?</button>
+    <button class="round-button red" (click)="logout()">התנתק</button>
+  </div>
+
+  <!-- <p *ngIf="this?.userName" class="greeting" > שלום {{ this?.userName }} -</p> -->
+  </div>
+
+
+<h2 class="products-title">רשימת מוצרים</h2>
+
+<!-- product-view.component.html -->
+<!-- … קוד קודם … -->
+
+<!-- 🔍 כרטיס סינונים מודרני -->
+<div class="filter-card" dir="rtl">
+  <!-- חיפוש טקסטואלי (אופציונלי) -->
+  <label>
+    🔎 חיפוש:
+    <input
+      type="search"
+      placeholder="הקלד לחיפוש…"
+      [(ngModel)]="searchTerm"
+      (input)="filterProducts()"
+    />
+  </label>
+
+  <!-- קטגוריה -->
+  <label>
+    📂 קטגוריה:
+    <select [(ngModel)]="selectedCategory" (change)="filterProducts()">
+      <option value="">כל הקטגוריות</option>
+      <option *ngFor="let cat of categories" [value]="cat.id">
+        {{ cat.name }}
+      </option>
+    </select>
+  </label>
+
+  <!-- מצב -->
+  <label>
+    ⚙️ מצב:
+    <select [(ngModel)]="selectedCondition" (change)="filterProducts()">
+      <option value="">כל המצבים</option>
+      <option *ngFor="let cond of conditions" [value]="cond.id">
+        {{ cond.name }}
+      </option>
+    </select>
+  </label>
+
+  <!-- טווח מחירים -->
+  <label>
+    💰 מינימום:
+    <input
+      type="number"
+      placeholder="0"
+      [(ngModel)]="minPrice"
+      (input)="filterProducts()"
+    />
+  </label>
+  <label>
+    💰 מקסימום:
+    <input
+      type="number"
+      placeholder="∞"
+      [(ngModel)]="maxPrice"
+      (input)="filterProducts()"
+    />
+  </label>
+  <label class="filter-checkbox">
+    <input type="checkbox" [(ngModel)]="hideDisliked" (change)="filterProducts()" />
+    הסתר לא מעניינים
+  </label>
+  <button class="clear-filters-btn" (click)="clearFilters()">🧹 נקה סינון</button>
+  <button class="sort-by-score-btn" (click)="sortProductsByScore()">התאמה {{ scoreSortOrder === 'desc' ? '⬇' : '⬆' }}</button>
+</div>
+
+<!-- … שאר הקוד של הטבלה … -->
+
+
+
+<div class="product-table-container"  dir="rtl">
+    <table class="product-table">
+      <thead>
+        <tr>
+          <th>שם מוצר</th>
+          <th>קטגוריה</th>
+          <th>מחיר</th>
+          <th>מצב</th>
+          <th>מאושר ע"י AI</th>
+          <th> התאמה באמצעות RandomForest</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let product of filteredProducts" (click)="viewProduct(product)" class="clickable-row" >
+          <td>{{ product?.name }}</td>
+          <td>{{ product?.category?.name }}</td>
+           <td>{{ product?.price | currency:'ILS' }}</td>
+          <td>{{ product?.condition?.name }}</td>
+          <td>
+            <span [ngClass]="{'approved': product.approvedByAI, 'not-approved': !product.approvedByAI}">
+              {{ product?.approvedByAI ? '✔' : '✘' }}
+            </span>
+          </td>
+          <td>{{ product?.score != null ? ((product.score || 0) * 100).toFixed(0) + '%' : 'N/A' }}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="overlay" *ngIf="showProductDetails">
+    <div class="modal">
+      <h3>{{ selectedProduct?.name }}</h3>
+      <p><strong>קטגוריה:</strong> {{ selectedProduct?.category?.name }}</p>
+      <p><strong>מחיר:</strong> {{ selectedProduct?.price | currency:'ILS' }}</p>
+      <p><strong>מצב:</strong> {{ selectedProduct?.condition?.name }}</p>
+      <p *ngIf="selectedProduct?.manufacturer" ><strong>יצרן:</strong> {{ selectedProduct?.manufacturer }}</p>
+      <p *ngIf="selectedProduct?.yearsUsed" ><strong>שנות שימוש:</strong> {{ selectedProduct?.yearsUsed }}</p>
+      <p *ngIf="selectedProduct?.purchasePrice" ><strong>מחיר רכישה מקורי:</strong> {{ selectedProduct?.purchasePrice }}</p>
+      <p *ngIf="selectedProduct?.material" ><strong>חומר:</strong> {{ selectedProduct?.material }}</p>
+      <p *ngIf="selectedProduct?.dimensions" ><strong>מידות:</strong> {{ selectedProduct?.dimensions }}</p>
+      <p><strong>תיאור:</strong> {{ selectedProduct?.description }}</p>
+
+      <div style="margin-top: 20px;">
+        <button
+        class="action-btn"
+        [disabled]="isProductLiked(selectedProduct!.id)"
+        (click)="markProductAsInterested(selectedProduct!.id)">
+        ✅ {{ isProductLiked(selectedProduct!.id) ? 'כבר אהבת' : 'המוצר מעניין אותי' }}
+      </button>
+
+      <button
+      class="action-btn not-interested-btn"
+      [disabled]="isProductDisliked(selectedProduct!.id)"
+      (click)="markProductAsNotInterested(selectedProduct!.id)">
+      ❌ {{ isProductDisliked(selectedProduct!.id) ? 'סימנת כלא מעניין' : 'לא מעניין אותי' }}
+    </button>
+        <!-- <button class="action-btn"  (click)="markProductAsInterested(selectedProduct!.id)" >✅ המוצר מעניין אותי</button>
+        <button class="action-btn not-interested-btn" (click)="markProductAsNotInterested(selectedProduct!.id)">
+          ❌ המוצר לא מעניין אותי
+        </button> -->
+         <button class="action-btn light" (click)="showContactDetails(selectedProduct!.userId)" >📞 הצג פרטי איש קשר</button>
+      </div>
+
+      <button class="close-btn" (click)="showProductDetails = false">✖ סגור</button>
+    </div>
+  </div>
+
+  <div class="overlay" *ngIf="showMyProducts">
+    <div class="modal">
+      <h3>המוצרים שלי</h3>
+      <button class="close-btn" (click)="showMyProducts = false">✖ סגור</button>
+
+      <table class="product-table">
+
+        <thead>
+            <tr>
+              <th>שם מוצר</th>
+              <th>קטגוריה</th>
+              <th>מחיר</th>
+              <th>מצב</th>
+              <th>מאושר ע"י AI</th>
+              <th>מספר אנשים שמעוניינים במוצר</th>
+              <th>פעולות</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let product of myProducts; let i = index">
+              <td>{{ product?.name }}</td>
+              <td>{{ product?.category?.name }}</td>
+              <td>{{ product?.price | currency:'ILS' }}</td>
+              <td>{{ product?.condition?.name }}</td>
+              <td>
+                <span [ngClass]="{'approved': product.approvedByAI, 'not-approved': !product.approvedByAI}">
+                  {{ product?.approvedByAI ? '✔' : '✘' }}
+                </span>
+              </td>
+              <td>{{ product?.countInterestedUsers }}</td>
+
+              <td  style="display: flex;" >
+                <button class="delete-btn" (click)="deleteMyProduct(product)">
+                  🗑
+                </button>
+                <button class="potential-exchange-btn" (click)="getPotentialExchangeProducts(product.id); showMyProducts = false" >
+                  מעבר למוצרים להחלפה
+                </button>
+              </td>
+            </tr>
+          </tbody>
+
+
+      </table>
+    </div>
+  </div>
+
+  <div class="overlay" *ngIf="showLikedProducts">
+    <div class="modal">
+      <h3>המוצרים שאהבתי</h3>
+      <button class="close-btn" (click)="showLikedProducts = false">✖ סגור</button>
+
+      <table class="product-table">
+        <thead>
+          <tr>
+            <th>שם מוצר</th>
+            <!-- <th>קטגוריה</th> -->
+            <th>מחיר</th>
+            <!-- <th>מצב</th>
+            <th>מאושר ע"י AI</th> -->
+            <th>פעולות</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let product of likedProducts">
+            <td>{{ product?.name }}</td>
+            <!-- <td>{{ product?.category?.name }}</td> -->
+            <td>{{ product?.price | currency:'ILS' }}</td>
+            <!-- <td>{{ product?.condition?.name }}</td> -->
+            <!-- <td>
+              <span [ngClass]="{'approved': product.approvedByAI, 'not-approved': !product.approvedByAI}">
+                {{ product?.approvedByAI ? '✔' : '✘' }}
+              </span>
+            </td> -->
+            <td>
+              <button class="action-btn light" (click)="showContactDetails(product.userId)">📞 פרטי איש קשר</button>
+              <button class="action-btn not-interested-btn" (click)="markProductAsNotInterested(product.id)">כבר לא מעוניין</button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="overlay" *ngIf="showExchangeMatches">
+    <div class="modal">
+      <h3>הצעות להחלפה</h3>
+      <button class="close-btn" (click)="showExchangeMatches = false">✖ סגור</button>
+
+      <table class="product-table">
+        <thead>
+          <tr>
+            <th>שם המוצר שלי</th>
+            <th>מחיר המוצר שלי</th>
+            <th>שם המוצר שיכול להתאים</th>
+            <th>מחיר המוצר שיכול להתאים</th>
+            <th>התאמה</th>
+            <th>פעולות</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let match of exchangeMatches">
+            <td>{{ match.myProduct.name }}</td>
+            <td>{{ match.myProduct.price | currency:'ILS' }}</td>
+            <td>{{ match.matchedProduct.name }}</td>
+            <td>{{ match.matchedProduct.price | currency:'ILS' }}</td>
+            <td>{{ (match.score * 100).toFixed(0) }}%</td>
+            <td>
+              <button class="action-btn" (click)="handleExchange(match.myProduct, match.matchedProduct)">
+                האם להחליף?
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    <!-- 🔍 אזור הפילטרים -->
+    <!-- <div class="filter-section">
+        <h2>🔍 סינון מוצרים</h2>
+
+        <div class="filter-row">
+            <div class="form-group">
+                <label for="search">חיפוש:</label>
+                <input id="search" [(ngModel)]="searchTerm" (input)="filterProducts()" class="form-control" placeholder="חפש מוצר...">
+            </div>
+            <div class="form-group">
+                <label for="category">קטגוריה:</label>
+                <select id="category" [(ngModel)]="selectedCategory" (change)="filterProducts()" class="form-control">
+                    <option value="">כל הקטגוריות</option>
+                    <option *ngFor="let category of categories" [ngValue]="category.id">{{ category.name }}</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="filter-row">
+            <div class="form-group">
+                <label for="minPrice">מחיר מינימלי:</label>
+                <input id="minPrice" [(ngModel)]="minPrice" type="number" class="form-control" (input)="filterProducts()">
+            </div>
+            <div class="form-group">
+                <label for="maxPrice">מחיר מקסימלי:</label>
+                <input id="maxPrice" [(ngModel)]="maxPrice" type="number" class="form-control" (input)="filterProducts()">
+            </div>
+        </div>
+    </div> -->
+
+    <!-- 📦 רשימת המוצרים -->
+    <!-- <div class="product-list">
+        <h2>📦 רשימת מוצרים</h2>
+        <div *ngIf="filteredProducts?.length > 0; else noProducts">
+            <div class="product-card" *ngFor="let product of filteredProducts">
+                <h3>{{ product.name }}</h3>
+                <p>מחיר: {{ product.price }} ₪</p>
+                <p>קטגוריה: {{ product.category.name }}</p>
+                <button class="btn details-btn" (click)="viewProduct(product)">🔎 פרטים</button>
+            </div>
+        </div>
+        <ng-template #noProducts>
+            <p class="no-products">❌ לא נמצאו מוצרים תואמים</p>
+        </ng-template>
+    </div> -->
+

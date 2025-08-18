@@ -1,0 +1,33 @@
+<div class="container">
+    <div class="login-container">
+      <h1>welcome to switch me</h1>
+      <p>התחבר לחשבונך או צור חשבון חדש</p>
+  
+      <!-- טופס כניסה -->
+      <div class="login-form">
+        <h2>התחברות</h2>
+        <form>
+          <div class="form-group">
+            <label for="email">אימייל:</label>
+            <input type="email" id="email" placeholder="הכנס אימייל" required />
+          </div>
+          <div class="form-group">
+            <label for="password">סיסמה:</label>
+            <input type="password" id="password" placeholder="הכנס סיסמה" required />
+          </div>
+          <button type="submit" class="btn-login">התחבר</button>
+
+          <!-- Google API -->
+          <div id="gSignInWrapper"></div> 
+
+        </form>
+      </div>
+      <div>
+      </div>
+      <!-- או ליצור משתמש חדש -->
+      <div class="signup-link">
+        <p>אין לך חשבון? <a href="#" (click)="goToCreateUser(); $event.preventDefault();"  >צור משתמש חדש</a></p>
+      </div>
+    </div>
+  </div>
+  
